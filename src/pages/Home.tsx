@@ -1,15 +1,27 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Alert } from 'react-native';
 
 import { Header } from '../components/Header';
 import { Task, TasksList } from '../components/TasksList';
 import { TodoInput } from '../components/TodoInput';
 
+export type EditTaskArgs = {
+  taskId: Number;
+  taskNewTitle: string;
+}
+
 export function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   function handleAddTask(newTaskTitle: string) {
-   const task : Task = {
+    const taskFound = tasks.find(t => t.title === newTaskTitle);
+    if(taskFound)
+    {
+      Alert.alert('Task já cadastrada',
+                  'Você não pode cadastrar uma task com o mesmo nome',);
+      return;
+    }
+    const task : Task = {
      id: new Date().getTime(),
      title: newTaskTitle,
      done: false
@@ -32,7 +44,33 @@ export function Home() {
 
   function handleRemoveTask(id: number) {
     //TODO - remove task from state
-    setTasks(oldstate => oldstate.filter(t => t.id !== id));
+    Alert.alert('Remover item',
+                  'Tem certeza que você deseja remover esse item?',
+                  [
+                    {
+                      style: 'destructive',
+                      text:'Yes',
+                      onPress: () => {setTasks(oldstate => oldstate.filter(t => t.id !== id));}
+                    },
+                    {
+                      style:'cancel',
+                      text:'No'
+                    }
+                  ]
+                  );
+  }
+
+  function handleEditTask({ taskId, taskNewTitle}: EditTaskArgs){
+    //Copia array inteiro para novo array. Regra da Imutabilidade
+    const updatedTasks = tasks.map( task => ({ ...task}));
+
+
+    const taskToBeUpdated = updatedTasks.find(t => t.id === taskId);
+    if(!taskToBeUpdated)
+    return;
+
+    taskToBeUpdated.title = taskNewTitle;
+    setTasks(updatedTasks);
   }
 
   return (
@@ -45,6 +83,7 @@ export function Home() {
         tasks={tasks} 
         toggleTaskDone={handleToggleTaskDone}
         removeTask={handleRemoveTask} 
+        editTask={handleEditTask}
       />
     </View>
   )
